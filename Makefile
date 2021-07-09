@@ -36,10 +36,17 @@ vendor: ## install repositories and vendors
 	docker-compose run --rm mlflow poetry install --remove-untracked
 .PHONY: vendor
 
+fixtures: ## Setup everything
+	$(MAKE) rm
+	docker-compose build
+	$(MAKE) up
+.PHONY: fixtures
+
 up: ## docker-compose up in daemon mode + process status
 	docker-compose up -d --remove-orphans
 	$(MAKE) ps
 .PHONY: up
+
 ps: ## docker-compose process status
 	docker-compose ps
 .PHONY: ps
@@ -51,6 +58,9 @@ rm: ## stop and delete containers but leave network and volumes
 all: rm vendor up ## Do all
 .PHONY: all
 
+services: ## List all possible services
+	docker-compose config --service
+.PHONY: services
 
 _ubuntu:
 	docker pull ubuntu
@@ -66,3 +76,10 @@ chown: _ubuntu ## Own your dir ! Don't let root get you !
 	$(MAKE) docker_make cmd="chown -R ${USER_ID}:${GROUP_ID} ."
 	$(MAKE) docker_make cmd="chmod -R 777 ."
 .PHONY: chown
+
+logs: ## Get log from a service
+	@:$(call check_defined, svc, service)
+	docker-compose logs -t -f ${svc}
+.PHONY: logs
+
+
